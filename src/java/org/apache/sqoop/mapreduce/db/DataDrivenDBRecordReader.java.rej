@@ -1,0 +1,16 @@
+***************
+*** 99,104 ****
+        query.append(" FROM ").append(tableName);
+        if (!dbProductName.startsWith("ORACLE")
+            && !dbProductName.startsWith("DB2")
+            && !dbProductName.startsWith("POSTGRESQL")) {
+          // The AS clause is required for hsqldb. Some other databases might have
+          // issues with it, so we're skipping some of them.
+--- 99,105 ----
+        query.append(" FROM ").append(tableName);
+        if (!dbProductName.startsWith("ORACLE")
+            && !dbProductName.startsWith("DB2")
++           && !dbProductName.startsWith("MICROSOFT SQL SERVER")
+            && !dbProductName.startsWith("POSTGRESQL")) {
+          // The AS clause is required for hsqldb. Some other databases might have
+          // issues with it, so we're skipping some of them.
