@@ -48,7 +48,7 @@ import java.util.Map;
 /**
  * Mock ResultSet instance that mocks Clob/Blob behavior.
  */
-public class MockResultSet implements ResultSet {
+public abstract class MockResultSet implements ResultSet {
 
   public static final byte [] blobData() {
     return new byte[] { 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9,

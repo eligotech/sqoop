@@ -79,7 +79,7 @@ public class CodeGenTool extends com.cloudera.sqoop.tool.BaseSqoopTool {
     CompilationManager compileMgr = new CompilationManager(options);
     ClassWriter classWriter = new ClassWriter(options, manager, tableName,
         compileMgr);
-    classWriter.generate();
+    classWriter.generate(options.getInvalidIdentifierPrefix());
     compileMgr.compile();
     compileMgr.jar();
     String jarFile = compileMgr.getJarFilename();
@@ -141,6 +141,7 @@ public class CodeGenTool extends com.cloudera.sqoop.tool.BaseSqoopTool {
         .withDescription("SQL 'statement' to generate code for")
         .withLongOpt(SQL_QUERY_ARG)
         .create(SQL_QUERY_SHORT_ARG));
+
     toolOptions.addUniqueOptions(codeGenOpts);
 
     toolOptions.addUniqueOptions(getOutputFormatOptions());
@@ -167,6 +168,11 @@ public class CodeGenTool extends com.cloudera.sqoop.tool.BaseSqoopTool {
     }
     if (in.hasOption(SQL_QUERY_ARG)) {
       out.setSqlQuery(in.getOptionValue(SQL_QUERY_ARG));
+    }
+
+    // Custom args
+    if (in.hasOption(INVALID_IDENTIFIER_PREFIX)) {
+      out.setInvalidIdentifierPrefix(in.getOptionValue(INVALID_IDENTIFIER_PREFIX));
     }
 
     applyCommonOptions(in, out);

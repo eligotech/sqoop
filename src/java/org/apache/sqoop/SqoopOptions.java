@@ -237,6 +237,9 @@ public class SqoopOptions implements Cloneable {
   // a temporary holding area for compilation work done by this process.
   private static String curNonce;
 
+  // Custom configuration options
+  private String invalidIdentifierPrefix;
+
   // the connection manager fully qualified class name
   @StoredAsProperty("connection.manager") private String connManagerClassName;
 
@@ -567,6 +570,9 @@ public class SqoopOptions implements Cloneable {
     if (this.verbose) {
       LoggingUtils.setDebugLevel();
     }
+
+    // Custom configuration options
+    this.invalidIdentifierPrefix = props.getProperty("invalid.identifier.prefix", "_");
   }
 
   /**
@@ -816,6 +822,9 @@ public class SqoopOptions implements Cloneable {
 
     // We do not want to be verbose too much if not explicitly needed
     this.verbose = false;
+
+    // Custom configuration defaults
+    this.invalidIdentifierPrefix = "_";
   }
 
   /**
@@ -1951,6 +1960,16 @@ public class SqoopOptions implements Cloneable {
 
   public Properties getConnectionParams() {
     return connectionParams;
+  }
+
+  // Custom config options
+
+  public void setInvalidIdentifierPrefix(String invalidIdentifierPrefix) {
+    this.invalidIdentifierPrefix = invalidIdentifierPrefix;
+  }
+
+  public String getInvalidIdentifierPrefix() {
+    return this.invalidIdentifierPrefix;
   }
 }
 

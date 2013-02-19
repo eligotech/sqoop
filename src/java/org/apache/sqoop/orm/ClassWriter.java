@@ -178,42 +178,58 @@ public class ClassWriter {
    *   similar to the candidate.
    */
   public static String toIdentifier(String candidate) {
-    StringBuilder sb = new StringBuilder();
-    // boolean first = true;
-    sb.append("_");
-    boolean first = false;
-    for (char c : candidate.toCharArray()) {
-      if (Character.isJavaIdentifierStart(c) && first) {
-        // Ok for this to be the first character of the identifier.
-        sb.append(c);
-        first = false;
-      } else if (Character.isJavaIdentifierPart(c) && !first) {
-        // Ok for this character to be in the output identifier.
-        sb.append(c);
-      } else {
-        // We have a character in the original that can't be
-        // part of this identifier we're building.
-        // If it's just not allowed to be the first char, add a leading '_'.
-        // If we have a reasonable translation (e.g., '-' -> '_'), do that.
-        // Otherwise, drop it.
-        if (first && Character.isJavaIdentifierPart(c)
-            && !Character.isJavaIdentifierStart(c)) {
-          sb.append("_");
-          sb.append(c);
-          first = false;
-        } else {
-          // Try to map this to a different character or string.
-          // If we can't just give up.
-          String translated = getIdentifierStrForChar(c);
-          if (null != translated) {
-            sb.append(translated);
-            first = false;
-          }
-        }
-      }
-    }
-    return sb.toString();
+    return toIdentifier(candidate, "_");
   }
+
+    /**
+     * Attempt to coerce a candidate name that is not valid Java or Avro into validity based on a prefix.
+     *
+     * This does not ensure that the result will be Java or Avro compatible if the prefix is not a valid Java or Avro
+     * character.
+     *
+     * @param candidate A string we want to use as an identifier
+     * @param prefix A string which is added as a prefix
+     * @return A string naming an identifier which compiles and is
+     *   similar to the candidate.
+     */
+    public static String toIdentifier(String candidate, String prefix) {
+        StringBuilder sb = new StringBuilder();
+        // boolean first = true;
+        //sb.append("_");
+        boolean first = true;
+        for (char c : candidate.toCharArray()) {
+            if (Character.isJavaIdentifierStart(c) && first) {
+                // Ok for this to be the first character of the identifier.
+                sb.append(c);
+                first = false;
+            } else if (Character.isJavaIdentifierPart(c) && !first) {
+                // Ok for this character to be in the output identifier.
+                sb.append(c);
+            } else {
+                // We have a character in the original that can't be
+                // part of this identifier we're building.
+                // If it's just not allowed to be the first char, add a leading '_'.
+                // If we have a reasonable translation (e.g., '-' -> '_'), do that.
+                // Otherwise, drop it.
+                if (first && Character.isJavaIdentifierPart(c)
+                        && !Character.isJavaIdentifierStart(c)) {
+                    sb.append(prefix);
+                    sb.append(c);
+                    first = false;
+                } else {
+                    // Try to map this to a different character or string.
+                    // If we can't just give up.
+                    String translated = getIdentifierStrForChar(c);
+                    if (null != translated) {
+                        sb.append(translated);
+                        first = false;
+                    }
+                }
+            }
+        }
+        return sb.toString();
+    }
+
 
   /**
    * Coerce a candidate name for an identifier into one which will
@@ -226,15 +242,31 @@ public class ClassWriter {
    * @return A string naming an identifier which compiles and is
    *   similar to the candidate.
    */
+
   public static String toJavaIdentifier(String candidate) {
-    String output = toIdentifier(candidate);
+    return toJavaIdentifier(candidate, "_");
+  }
+
+  /**
+   * Coerce a candidate name for an identifier into one which will
+   * definitely compile provided that the invalidPrefixIdentifier valid.
+   *
+   * Ensures that the returned identifier matches [A-Za-z_][A-Za-z0-9_]*
+   * and is not a reserved word.
+   *
+   * @param candidate A string we want to use as an identifier
+   * @return A string naming an identifier which compiles and is
+   *   similar to the candidate.
+   */
+  public static String toJavaIdentifier(String candidate, String invalidIdentifierPrefix) {
+    String output = toIdentifier(candidate, invalidIdentifierPrefix);
     if (LOG.isDebugEnabled()) {
       LOG.info("candidate: " + candidate);
       LOG.info("output: " + output);
     }
     if (isReservedWord(output)) {
       // e.g., 'class' -> '_class';
-      return "_" + output;
+      return invalidIdentifierPrefix + output;
 
     /*
      * We're using candidate.startsWith instead of output.startsWith on purpose
@@ -1054,16 +1086,24 @@ public class ClassWriter {
    * cleaned up to be used as identifiers in the generated Java class.
    */
   private String [] cleanColNames(String [] colNames) {
+    return cleanColNames(colNames, "_");
+  }
+
+
+  /**
+   * Create a list of identifiers to use based on the true column names
+   * of the table.
+   * @param colNames the actual column names of the table.
+   * @param invalidIdentifierPrefix the string to append as prefix for invalid identifiers
+   * @return a list of column names in the same order which are
+   * cleaned up to be used as identifiers in the generated Java class.
+   */
+  private String [] cleanColNames(String [] colNames, String invalidIdentifierPrefix) {
     String [] cleanedColNames = new String[colNames.length];
     for (int i = 0; i < colNames.length; i++) {
       String col = colNames[i];
-      String identifier = col;
-      underscores = 1;
-      while (Arrays.asList(colNames).contains(identifier) ||
-             Arrays.asList(cleanedColNames).contains(identifier)) {
-        underscores++;
-        identifier = toJavaIdentifier(col);
-      }
+      String identifier = toJavaIdentifier(col, invalidIdentifierPrefix);
+
       cleanedColNames[i] = identifier;
     }
 
@@ -1075,13 +1115,20 @@ public class ClassWriter {
    * Generate the ORM code for the class.
    */
   public void generate() throws IOException {
+    this.generate("_");
+  }
+
+  /**
+   * Generate the ORM code for the class.
+   */
+  public void generate(String invalidIdentifierPrefix) throws IOException {
     Map<String, Integer> columnTypes = getColumnTypes();
 
     String[] colNames = getColumnNames(columnTypes);
 
     // Translate all the column names into names that are safe to
     // use as identifiers.
-    String [] cleanedColNames = cleanColNames(colNames);
+    String [] cleanedColNames = cleanColNames(colNames, invalidIdentifierPrefix);
     Set<String> uniqColNames = new HashSet<String>();
     for (int i = 0; i < colNames.length; i++) {
       String identifier = cleanedColNames[i];

@@ -25,6 +25,8 @@
 /build.properties
 /conf/managers.d
 /conf/tools.d
+out
+maven-ant-tasks-2.0.10.jar
 .idea
 *.iml
 target

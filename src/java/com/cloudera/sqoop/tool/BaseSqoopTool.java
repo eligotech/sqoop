@@ -197,8 +197,11 @@ public abstract class BaseSqoopTool
           org.apache.sqoop.tool.BaseSqoopTool.OLD_DATASET_ARG;
   public static final String MERGE_KEY_ARG =
           org.apache.sqoop.tool.BaseSqoopTool.MERGE_KEY_ARG;
+  // Custom arg
+  public static final String INVALID_IDENTIFIER_PREFIX =
+          org.apache.sqoop.tool.BaseSqoopTool.INVALID_IDENTIFIER_PREFIX;
 
-  public BaseSqoopTool() {
+    public BaseSqoopTool() {
   }
 
   public BaseSqoopTool(String toolName) {

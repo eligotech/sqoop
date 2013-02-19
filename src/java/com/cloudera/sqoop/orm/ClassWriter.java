@@ -79,8 +79,16 @@ public class ClassWriter
     return org.apache.sqoop.orm.ClassWriter.toIdentifier(candidate);
   }
 
+  public static String toIdentifier(String candidate, String prefix) {
+    return org.apache.sqoop.orm.ClassWriter.toIdentifier(candidate, prefix);
+  }
+
   public static String toJavaIdentifier(String candidate) {
     return org.apache.sqoop.orm.ClassWriter.toJavaIdentifier(candidate);
+  }
+
+  public static String toJavaIdentifier(String candidate, String prefix) {
+    return org.apache.sqoop.orm.ClassWriter.toJavaIdentifier(candidate, prefix);
   }
 
   // public static String getIdentifierStrForChar(char c) {
