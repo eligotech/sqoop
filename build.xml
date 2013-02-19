@@ -99,7 +99,7 @@
   <property name="Name" value="Sqoop" />
   <!-- <property name="offline" value="true" /> -->
 
-  <property name="version" value="1.4.2-mod1" />
+  <property name="version" value="1.4.2.1" />
 
   <!-- The last version released. -->
   <property name="oldversion" value="1.4.1-incubating" />
@@ -190,9 +190,9 @@
   <!-- maven -->
   <property name="mvn.build.dir" value="${build.dir}/m2" />
   <property name="mvn.repo" value="snapshots" />
-  <property name="mvn.repo.id" value="cloudera.${mvn.repo}.repo" />
+  <property name="mvn.repo.id" value="${mvn.repo}" />
   <property name="mvn.deploy.url"
-      value="https://repository.cloudera.com/content/repositories/${mvn.repo}"/>
+      value="http://repo.eligotech.com/nexus/content/repositories/${mvn.repo}"/>
   <property name="sqoop.pom" value="${mvn.build.dir}/sqoop.pom" />
   <property name="sqooptest.pom" value="${mvn.build.dir}/sqoop-test.pom" />
 
@@ -914,7 +914,7 @@
       description="Deploy Sqoop to public maven repository">
     <artifact:pom file="${sqoop.pom}" id="sqoop" />
     <artifact:deploy file="${build.dir}/${dest.jar}">
-      <remoteRepository id="${mvn.repo.id}" url="${mvn.deploy.url}"/>
+      <remoteRepository id="${mvn.repo.id}" url="${mvn.deploy.url}" />
       <pom refid="sqoop" />
       <attach file="${build.srcjar.dir}/${artifact.name}-sources.jar"
           classifier="sources" />

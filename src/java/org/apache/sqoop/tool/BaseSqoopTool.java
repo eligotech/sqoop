@@ -90,6 +90,7 @@ public abstract class BaseSqoopTool extends com.cloudera.sqoop.tool.SqoopTool {
   public static final String INPUT_NULL_NON_STRING = "input-null-non-string";
   public static final String MAP_COLUMN_JAVA = "map-column-java";
   public static final String MAP_COLUMN_HIVE = "map-column-hive";
+  public static final String INVALID_IDENTIFIER_PREFIX = "invalid-identifier-prefix";
 
   public static final String FMT_SEQUENCEFILE_ARG = "as-sequencefile";
   public static final String FMT_TEXTFILE_ARG = "as-textfile";
@@ -589,6 +590,13 @@ public abstract class BaseSqoopTool extends com.cloudera.sqoop.tool.SqoopTool {
           .withLongOpt(CLASS_NAME_ARG)
           .create());
     }
+
+  codeGenOpts.addOption(OptionBuilder.withArgName(INVALID_IDENTIFIER_PREFIX)
+          .hasArg()
+          .withDescription("Set the prefix for invalid table/column identifiers")
+          .withLongOpt(INVALID_IDENTIFIER_PREFIX)
+          .create());
+
     return codeGenOpts;
   }
 
