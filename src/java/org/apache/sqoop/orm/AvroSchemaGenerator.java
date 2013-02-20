@@ -44,12 +44,17 @@ public class AvroSchemaGenerator {
   private final SqoopOptions options;
   private final ConnManager connManager;
   private final String tableName;
+  private final String invalidIdentifierPrefix;
+
 
   public AvroSchemaGenerator(final SqoopOptions opts, final ConnManager connMgr,
       final String table) {
     this.options = opts;
     this.connManager = connMgr;
     this.tableName = table;
+
+    // Custom configuration options
+    this.invalidIdentifierPrefix = opts.getInvalidIdentifierPrefix();
   }
 
   public Schema generate() throws IOException {
@@ -60,10 +65,10 @@ public class AvroSchemaGenerator {
 
     List<Field> fields = new ArrayList<Field>();
     for (String columnName : columnNames) {
-      String cleanedCol = ClassWriter.toIdentifier(columnName);
+      String cleanedCol = ClassWriter.toIdentifier(columnName, invalidIdentifierPrefix);
 			LOG.debug("Mapping column " + cleanedCol + " to " + columnName);
       int sqlType = columnTypes.get(columnName);
-      Schema avroSchema = toAvroSchema(sqlType, columnName);
+      Schema avroSchema = toAvroSchema(sqlType, cleanedCol);
       Field field = new Field(cleanedCol, avroSchema, null, null);
       field.addProp("columnName", columnName);
       field.addProp("sqlType", Integer.toString(sqlType));

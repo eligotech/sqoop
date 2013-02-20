@@ -800,6 +800,11 @@ public class ImportTool extends com.cloudera.sqoop.tool.BaseSqoopTool {
         out.setExistingJarName(in.getOptionValue(JAR_FILE_NAME_ARG));
       }
 
+      // Custom args
+      if (in.hasOption(INVALID_IDENTIFIER_PREFIX)) {
+        out.setInvalidIdentifierPrefix(in.getOptionValue(INVALID_IDENTIFIER_PREFIX));
+      }
+
       applyIncrementalOptions(in, out);
       applyHiveOptions(in, out);
       applyOutputFormatOptions(in, out);
