@@ -33,7 +33,6 @@ import com.cloudera.sqoop.manager.TestHsqldbManager;
 import com.cloudera.sqoop.manager.TestSqlManager;
 import com.cloudera.sqoop.mapreduce.MapreduceTests;
 import com.cloudera.sqoop.metastore.TestSavedJobs;
-import com.cloudera.sqoop.orm.TestClassWriter;
 import com.cloudera.sqoop.orm.TestParseMethods;
 
 import com.cloudera.sqoop.tool.TestToolPlugin;
@@ -54,7 +53,6 @@ public final class SmokeTests {
     suite.addTestSuite(TestAllTables.class);
     suite.addTestSuite(TestHsqldbManager.class);
     suite.addTestSuite(TestSqlManager.class);
-    suite.addTestSuite(TestClassWriter.class);
     suite.addTestSuite(TestColumnTypes.class);
     suite.addTestSuite(TestExport.class);
     suite.addTestSuite(TestMultiCols.class);

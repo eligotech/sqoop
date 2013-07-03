@@ -48,7 +48,7 @@ import java.util.Map;
 /**
  * Mock ResultSet instance that mocks Clob/Blob behavior.
  */
-public abstract class MockResultSet implements ResultSet {
+public class MockResultSet implements ResultSet {
 
   public static final byte [] blobData() {
     return new byte[] { 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9,
@@ -1016,6 +1016,16 @@ public abstract class MockResultSet implements ResultSet {
 
   @Override
   public byte[] getBytes(String columnLabel) throws SQLException {
+    return null;
+  }
+
+  @Override
+  public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
+    return null;
+  }
+
+  @Override
+  public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
     return null;
   }
 }
