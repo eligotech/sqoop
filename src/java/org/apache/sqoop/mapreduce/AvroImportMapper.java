@@ -39,6 +39,7 @@ import com.cloudera.sqoop.lib.ClobRef;
 import com.cloudera.sqoop.lib.LargeObjectLoader;
 import com.cloudera.sqoop.lib.SqoopRecord;
 import com.cloudera.sqoop.mapreduce.AutoProgressMapper;
+import org.apache.sqoop.orm.AvroSchemaGenerator;
 
 /**
  * Imports records by transforming them to Avro records in an Avro data file.
@@ -86,7 +87,7 @@ public class AvroImportMapper
     Map<String, Object> fieldMap = val.getFieldMap();
     GenericRecord record = new GenericData.Record(schema);
     for (Map.Entry<String, Object> entry : fieldMap.entrySet()) {
-      record.put(entry.getKey(), toAvro(entry.getValue()));
+      record.put(entry.getKey(), toAvro(entry.getValue(), schema.getField(entry.getKey()).schema()));
     }
     return record;
   }
@@ -94,18 +95,20 @@ public class AvroImportMapper
   /**
    * Convert the Avro representation of a Java type (that has already been
    * converted from the SQL equivalent).
+   *
    * @param o
+   * @param schema
    * @return
    */
-  private Object toAvro(Object o) {
+  private Object toAvro(Object o, Schema schema) {
     if (o instanceof BigDecimal) {
       return o.toString();
     } else if (o instanceof Date) {
-      return ((Date) o).getTime();
+      return toDateRecord(((Date)o).getTime(), schema);
     } else if (o instanceof Time) {
       return ((Time) o).getTime();
     } else if (o instanceof Timestamp) {
-      return ((Timestamp) o).getTime();
+      return toDateRecord(((Timestamp) o).getTime(), schema);
     } else if (o instanceof BytesWritable) {
       BytesWritable bw = (BytesWritable) o;
       return ByteBuffer.wrap(bw.getBytes(), 0, bw.getLength());
@@ -122,5 +125,9 @@ public class AvroImportMapper
     return o;
   }
 
-
+  private Object toDateRecord(long time, Schema schema) {
+    GenericData.Record dateRecord = new GenericData.Record(schema);
+    dateRecord.put(AvroSchemaGenerator.EPOCH, time);
+    return dateRecord;
+  }
 }
