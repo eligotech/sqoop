@@ -824,7 +824,7 @@ public class SqoopOptions implements Cloneable {
     this.verbose = false;
 
     // Custom configuration defaults
-    this.invalidIdentifierPrefix = "_";
+    this.invalidIdentifierPrefix = "S_";
   }
 
   /**
