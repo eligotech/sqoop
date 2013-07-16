@@ -21,15 +21,15 @@ package com.cloudera.sqoop;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.Schema.Type;
 import org.apache.avro.file.DataFileConstants;
 import org.apache.avro.file.DataFileReader;
+import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumReader;
@@ -44,6 +44,7 @@ import com.cloudera.sqoop.testutil.BaseSqoopTestCase;
 import com.cloudera.sqoop.testutil.CommonArgs;
 import com.cloudera.sqoop.testutil.HsqldbTestServer;
 import com.cloudera.sqoop.testutil.ImportJobTestCase;
+import org.apache.sqoop.orm.AvroSchemaGenerator;
 
 /**
  * Tests --as-avrodatafile.
@@ -120,8 +121,13 @@ public class TestAvroImport extends ImportJobTestCase {
     throws IOException {
     String[] types =
       {"BIT", "INTEGER", "BIGINT", "REAL", "DOUBLE", "VARCHAR(6)",
-        "VARBINARY(2)", };
-    String[] vals = {"true", "100", "200", "1.0", "2.0", "'s'", "'0102'", };
+        "VARBINARY(2)", "DATE", "TIMESTAMP" };
+    Calendar testDate = newCalendar(2012, Calendar.APRIL, 3);
+    Calendar testTimestamp = Calendar.getInstance();
+    String[] vals = {"true", "100", "200", "1.0", "2.0", "'s'", "'0102'",
+            singleQuote(new SimpleDateFormat("YYYY-MM-dd").format(testDate.getTime())),
+            singleQuote(new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(testTimestamp.getTime()))
+    } ;
     createTableWithColTypes(types, vals);
 
     runImport(getOutputArgv(true, extraArgs));
@@ -140,6 +146,8 @@ public class TestAvroImport extends ImportJobTestCase {
     checkField(fields.get(4), "DATA_COL4", Schema.Type.DOUBLE);
     checkField(fields.get(5), "DATA_COL5", Schema.Type.STRING);
     checkField(fields.get(6), "DATA_COL6", Schema.Type.BYTES);
+    checkDateField(fields.get(7), "DATA_COL7", AvroSchemaGenerator.DATE_TYPE_NAME);
+    checkDateField(fields.get(8), "DATA_COL8", AvroSchemaGenerator.TIMESTAMP_TYPE_NAME);
 
     GenericRecord record1 = reader.next();
     assertEquals("DATA_COL0", true, record1.get("DATA_COL0"));
@@ -153,10 +161,27 @@ public class TestAvroImport extends ImportJobTestCase {
     ByteBuffer b = ((ByteBuffer) object);
     assertEquals((byte) 1, b.get(0));
     assertEquals((byte) 2, b.get(1));
+    assertEquals("DATA_COL7", testDate.getTimeInMillis(), getEpoch(record1, "DATA_COL7"));
+    assertEquals("DATA_COL8", testTimestamp.getTimeInMillis(), getEpoch(record1, "DATA_COL8"));
 
     if (codec != null) {
       assertEquals(codec, reader.getMetaString(DataFileConstants.CODEC));
     }
+  }
+
+  private Object getEpoch(GenericRecord record, String fieldName) {
+    return ((GenericData.Record)(record.get(fieldName))).get(AvroSchemaGenerator.EPOCH);
+  }
+
+  private Calendar newCalendar(int year, int month, int day) {
+    Calendar testDate = Calendar.getInstance();
+    testDate.clear();
+    testDate.set(year, month, day);
+    return testDate;
+  }
+
+  private String singleQuote(String string) {
+    return "'" + string + "'";
   }
 
   public void testOverrideTypeMapping() throws IOException {
@@ -179,6 +204,15 @@ public class TestAvroImport extends ImportJobTestCase {
 
     GenericRecord record1 = reader.next();
     assertEquals("DATA_COL0", new Utf8("10"), record1.get("DATA_COL0"));
+  }
+
+  private void checkDateField(Field field, String fieldName, String dateTypeName) {
+    assertEquals(fieldName, field.name());
+    assertEquals(Type.RECORD, field.schema().getType());
+    assertEquals(dateTypeName, field.schema().getName());
+    assertEquals(1, field.schema().getFields().size());
+    Field epochField = field.schema().getFields().get(0);
+    checkField(epochField, AvroSchemaGenerator.EPOCH, Type.LONG);
   }
 
   private void checkField(Field field, String name, Type type) {
