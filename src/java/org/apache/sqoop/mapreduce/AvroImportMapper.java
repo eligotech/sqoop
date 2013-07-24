@@ -26,6 +26,9 @@ import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Map;
+
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
@@ -126,8 +129,20 @@ public class AvroImportMapper
   }
 
   private Object toDateRecord(long time, Schema schema) {
-    GenericData.Record dateRecord = new GenericData.Record(schema);
+    Schema dateSchema = schema.getType() == Schema.Type.UNION
+            ? Iterables.find(schema.getTypes(), schemaTypeEquals(Schema.Type.RECORD))
+            : schema;
+    GenericData.Record dateRecord = new GenericData.Record(dateSchema);
     dateRecord.put(AvroSchemaGenerator.EPOCH, time);
     return dateRecord;
+  }
+
+  private Predicate<? super Schema> schemaTypeEquals(final Schema.Type schemaType) {
+    return new Predicate<Schema>() {
+      @Override
+      public boolean apply(Schema schema) {
+        return schema.getType().equals(schemaType);
+      }
+    };
   }
 }
