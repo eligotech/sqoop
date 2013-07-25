@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.sql.Types;
 import java.util.*;
 
+import com.google.common.collect.Lists;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.Schema.Type;
@@ -109,7 +110,7 @@ public class AvroSchemaGenerator {
     Schema dateRecord = Schema.createRecord(sqlType == Types.DATE ? DATE_TYPE_NAME : TIMESTAMP_TYPE_NAME,
         "Date imported as record", null, false);
     dateRecord.setFields(Collections.singletonList(new Field(EPOCH, schema, "time in ms since epoch", null)));
-    return dateRecord;
+    return Schema.createUnion(Lists.newArrayList(dateRecord, Schema.create(Schema.Type.NULL)));
   }
 
   private boolean isDateType(int sqlType) {

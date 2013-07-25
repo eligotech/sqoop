@@ -106,6 +106,36 @@ public class TestAvroImport extends ImportJobTestCase {
     }
   }
 
+  public void testAvroImportNulls() throws IOException {
+    String[] types =
+            {"BIT", "INTEGER", "BIGINT", "REAL", "DOUBLE", "VARCHAR(6)",
+                    "VARBINARY(2)", "DATE", "TIMESTAMP" };
+    String[] vals = Collections.<String>nCopies(types.length, null).toArray(new String[types.length]);
+    createTableWithColTypes(types, vals);
+
+    runImport(getOutputArgv(true, null));
+
+    Path outputFile = new Path(getTablePath(), "part-m-00000.avro");
+    DataFileReader<GenericRecord> reader = read(outputFile);
+    Schema schema = reader.getSchema();
+    assertEquals(Schema.Type.RECORD, schema.getType());
+    List<Field> fields = schema.getFields();
+    assertEquals(types.length, fields.size());
+
+    checkField(fields.get(0), "DATA_COL0", Schema.Type.BOOLEAN);
+    checkField(fields.get(1), "DATA_COL1", Schema.Type.INT);
+    checkField(fields.get(2), "DATA_COL2", Schema.Type.LONG);
+    checkField(fields.get(3), "DATA_COL3", Schema.Type.FLOAT);
+    checkField(fields.get(4), "DATA_COL4", Schema.Type.DOUBLE);
+    checkField(fields.get(5), "DATA_COL5", Schema.Type.STRING);
+    checkField(fields.get(6), "DATA_COL6", Schema.Type.BYTES);
+    checkDateField(fields.get(7), "DATA_COL7", AvroSchemaGenerator.DATE_TYPE_NAME);
+    checkDateField(fields.get(8), "DATA_COL8", AvroSchemaGenerator.TIMESTAMP_TYPE_NAME);
+
+    GenericRecord record1 = reader.next();
+    for(int i = 0; i < types.length; ++i) assertEquals("DATA_COL" + i, null, record1.get("DATA_COL" + i));
+  }
+
   /**
    * Helper method that runs an import using Avro with optional command line
    * arguments and checks that the created file matches the expectations.
@@ -207,11 +237,11 @@ public class TestAvroImport extends ImportJobTestCase {
   }
 
   private void checkDateField(Field field, String fieldName, String dateTypeName) {
-    assertEquals(fieldName, field.name());
-    assertEquals(Type.RECORD, field.schema().getType());
-    assertEquals(dateTypeName, field.schema().getName());
-    assertEquals(1, field.schema().getFields().size());
-    Field epochField = field.schema().getFields().get(0);
+    checkField(field, fieldName, Type.RECORD);
+    Schema dateRecordSchema = field.schema().getTypes().get(0);
+    assertEquals(dateTypeName, dateRecordSchema.getName());
+    assertEquals(1, dateRecordSchema.getFields().size());
+    Field epochField = dateRecordSchema.getFields().get(0);
     checkField(epochField, AvroSchemaGenerator.EPOCH, Type.LONG);
   }
 
