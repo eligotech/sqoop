@@ -25,10 +25,10 @@ import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Map;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
@@ -42,7 +42,8 @@ import com.cloudera.sqoop.lib.ClobRef;
 import com.cloudera.sqoop.lib.LargeObjectLoader;
 import com.cloudera.sqoop.lib.SqoopRecord;
 import com.cloudera.sqoop.mapreduce.AutoProgressMapper;
-import org.apache.sqoop.orm.AvroSchemaGenerator;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 
 /**
  * Imports records by transforming them to Avro records in an Avro data file.
@@ -90,7 +91,7 @@ public class AvroImportMapper
     Map<String, Object> fieldMap = val.getFieldMap();
     GenericRecord record = new GenericData.Record(schema);
     for (Map.Entry<String, Object> entry : fieldMap.entrySet()) {
-      record.put(entry.getKey(), toAvro(entry.getValue(), schema.getField(entry.getKey()).schema()));
+      record.put(entry.getKey(), toAvro(entry.getValue()));
     }
     return record;
   }
@@ -99,19 +100,19 @@ public class AvroImportMapper
    * Convert the Avro representation of a Java type (that has already been
    * converted from the SQL equivalent).
    *
+   *
    * @param o
-   * @param schema
    * @return
    */
-  private Object toAvro(Object o, Schema schema) {
+  private Object toAvro(Object o) {
     if (o instanceof BigDecimal) {
       return o.toString();
     } else if (o instanceof Date) {
-      return toDateRecord(((Date)o).getTime(), schema);
+      return isoDateTimeFormatter().format((Date) o);
     } else if (o instanceof Time) {
-      return ((Time) o).getTime();
+      return isoTimeFormatter().format((Time)o);
     } else if (o instanceof Timestamp) {
-      return toDateRecord(((Timestamp) o).getTime(), schema);
+      return isoDateTimeFormatter().format((Timestamp) o);
     } else if (o instanceof BytesWritable) {
       BytesWritable bw = (BytesWritable) o;
       return ByteBuffer.wrap(bw.getBytes(), 0, bw.getLength());
@@ -128,21 +129,12 @@ public class AvroImportMapper
     return o;
   }
 
-  private Object toDateRecord(long time, Schema schema) {
-    Schema dateSchema = schema.getType() == Schema.Type.UNION
-            ? Iterables.find(schema.getTypes(), schemaTypeEquals(Schema.Type.RECORD))
-            : schema;
-    GenericData.Record dateRecord = new GenericData.Record(dateSchema);
-    dateRecord.put(AvroSchemaGenerator.EPOCH, time);
-    return dateRecord;
-  }
+    DateFormat isoDateTimeFormatter() {
+        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+    }
 
-  private Predicate<? super Schema> schemaTypeEquals(final Schema.Type schemaType) {
-    return new Predicate<Schema>() {
-      @Override
-      public boolean apply(Schema schema) {
-        return schema.getType().equals(schemaType);
-      }
-    };
-  }
+    DateFormat isoTimeFormatter() {
+        return new SimpleDateFormat("HH:mm:ss.SSS");
+    }
+
 }

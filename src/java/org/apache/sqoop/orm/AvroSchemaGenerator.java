@@ -19,10 +19,8 @@
 package org.apache.sqoop.orm;
 
 import java.io.IOException;
-import java.sql.Types;
 import java.util.*;
 
-import com.google.common.collect.Lists;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.Schema.Type;
@@ -39,9 +37,6 @@ public class AvroSchemaGenerator {
 
   public static final Log LOG =
       LogFactory.getLog(AvroSchemaGenerator.class.getName());
-  public static final String EPOCH = "epoch";
-  public static final String DATE_TYPE_NAME = "Date";
-  public static final String TIMESTAMP_TYPE_NAME = "Timestamp";
 
   private final SqoopOptions options;
   private final ConnManager connManager;
@@ -101,24 +96,7 @@ public class AvroSchemaGenerator {
     List<Schema> childSchemas = new ArrayList<Schema>();
     childSchemas.add(Schema.create(toAvroType(columnName, sqlType)));
     childSchemas.add(Schema.create(Schema.Type.NULL));
-    Schema schema = Schema.createUnion(childSchemas);
-    if(isDateType(sqlType)) schema = wrapInDateRecord(sqlType, schema);
-    return schema;
-  }
-
-  private Schema wrapInDateRecord(int sqlType, Schema schema) {
-    Schema dateRecord = Schema.createRecord(sqlType == Types.DATE ? DATE_TYPE_NAME : TIMESTAMP_TYPE_NAME,
-        "Date imported as record", null, false);
-    dateRecord.setFields(Collections.singletonList(new Field(EPOCH, schema, "time in ms since epoch", null)));
-    return Schema.createUnion(Lists.newArrayList(dateRecord, Schema.create(Schema.Type.NULL)));
-  }
-
-  private boolean isDateType(int sqlType) {
-    return sqlType == Types.DATE || sqlType == Types.TIMESTAMP;
-  }
-
-  public Schema toAvroSchema(int sqlType) {
-    return toAvroSchema(sqlType, null);
+    return Schema.createUnion(childSchemas);
   }
 
   private Type toAvroType(String columnName, int sqlType) {

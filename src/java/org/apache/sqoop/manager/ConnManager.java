@@ -189,7 +189,7 @@ public abstract class ConnManager {
     case Types.DATE:
     case Types.TIME:
     case Types.TIMESTAMP:
-      return Type.LONG;
+      return Type.STRING;
     case Types.BLOB:
     case Types.BINARY:
     case Types.VARBINARY:
