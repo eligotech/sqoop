@@ -99,7 +99,7 @@
   <property name="Name" value="Sqoop" />
   <!-- <property name="offline" value="true" /> -->
 
-  <property name="version" value="1.4.2.4-SNAPSHOT" />
+  <property name="version" value="1.4.2.4" />
 
   <!-- The last version released. -->
   <property name="oldversion" value="1.4.1-incubating" />
@@ -189,7 +189,7 @@
 
   <!-- maven -->
   <property name="mvn.build.dir" value="${build.dir}/m2" />
-  <property name="mvn.repo" value="snapshots" />
+  <property name="mvn.repo" value="releases" />
   <property name="mvn.repo.id" value="${mvn.repo}" />
   <property name="mvn.deploy.url"
       value="http://repo.eligotech.com/nexus/content/repositories/${mvn.repo}"/>
