@@ -18,18 +18,15 @@
 
 package com.cloudera.sqoop;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.sql.SQLException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-
+import com.cloudera.sqoop.testutil.BaseSqoopTestCase;
+import com.cloudera.sqoop.testutil.CommonArgs;
+import com.cloudera.sqoop.testutil.HsqldbTestServer;
+import com.cloudera.sqoop.testutil.ImportJobTestCase;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.Schema.Type;
 import org.apache.avro.file.DataFileConstants;
 import org.apache.avro.file.DataFileReader;
-import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumReader;
@@ -39,12 +36,16 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.joda.time.DateMidnight;
+import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
+import org.joda.time.LocalTime;
+import org.joda.time.format.DateTimeFormat;
 
-import com.cloudera.sqoop.testutil.BaseSqoopTestCase;
-import com.cloudera.sqoop.testutil.CommonArgs;
-import com.cloudera.sqoop.testutil.HsqldbTestServer;
-import com.cloudera.sqoop.testutil.ImportJobTestCase;
-import org.apache.sqoop.orm.AvroSchemaGenerator;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.sql.SQLException;
+import java.util.*;
 
 /**
  * Tests --as-avrodatafile.
@@ -129,8 +130,8 @@ public class TestAvroImport extends ImportJobTestCase {
     checkField(fields.get(4), "DATA_COL4", Schema.Type.DOUBLE);
     checkField(fields.get(5), "DATA_COL5", Schema.Type.STRING);
     checkField(fields.get(6), "DATA_COL6", Schema.Type.BYTES);
-    checkDateField(fields.get(7), "DATA_COL7", AvroSchemaGenerator.DATE_TYPE_NAME);
-    checkDateField(fields.get(8), "DATA_COL8", AvroSchemaGenerator.TIMESTAMP_TYPE_NAME);
+    checkField(fields.get(7), "DATA_COL7", Schema.Type.STRING);
+    checkField(fields.get(8), "DATA_COL8", Schema.Type.STRING);
 
     GenericRecord record1 = reader.next();
     for(int i = 0; i < types.length; ++i) assertEquals("DATA_COL" + i, null, record1.get("DATA_COL" + i));
@@ -151,12 +152,16 @@ public class TestAvroImport extends ImportJobTestCase {
     throws IOException {
     String[] types =
       {"BIT", "INTEGER", "BIGINT", "REAL", "DOUBLE", "VARCHAR(6)",
-        "VARBINARY(2)", "DATE", "TIMESTAMP" };
-    Calendar testDate = newCalendar(2012, Calendar.APRIL, 3);
-    Calendar testTimestamp = Calendar.getInstance();
+        "VARBINARY(2)", "DATE", "TIMESTAMP", "TIME" };
+    DateMidnight testDate = new LocalDate().toDateMidnight();
+    LocalTime testTime = new LocalTime().withMillisOfSecond(0);
+    // this example checks for wrong week-year conversion
+    DateTime testTimestamp = testTime.toDateTime(new DateTime(2012, 12, 31, 0, 0, 0, 0));
+    String timestampPattern = "YYYY-MM-dd HH:mm:ss.SSS";
     String[] vals = {"true", "100", "200", "1.0", "2.0", "'s'", "'0102'",
-            singleQuote(new SimpleDateFormat("YYYY-MM-dd").format(testDate.getTime())),
-            singleQuote(new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(testTimestamp.getTime()))
+      singleQuote(DateTimeFormat.forPattern("YYYY-MM-dd").print(testDate)),
+      singleQuote(DateTimeFormat.forPattern(timestampPattern).print(testTimestamp)),
+      singleQuote(DateTimeFormat.forPattern("HH:mm:ss").print(testTime))
     } ;
     createTableWithColTypes(types, vals);
 
@@ -176,8 +181,9 @@ public class TestAvroImport extends ImportJobTestCase {
     checkField(fields.get(4), "DATA_COL4", Schema.Type.DOUBLE);
     checkField(fields.get(5), "DATA_COL5", Schema.Type.STRING);
     checkField(fields.get(6), "DATA_COL6", Schema.Type.BYTES);
-    checkDateField(fields.get(7), "DATA_COL7", AvroSchemaGenerator.DATE_TYPE_NAME);
-    checkDateField(fields.get(8), "DATA_COL8", AvroSchemaGenerator.TIMESTAMP_TYPE_NAME);
+    checkField(fields.get(7), "DATA_COL7", Type.STRING);
+    checkField(fields.get(8), "DATA_COL8", Type.STRING);
+    checkField(fields.get(9), "DATA_COL9", Type.STRING);
 
     GenericRecord record1 = reader.next();
     assertEquals("DATA_COL0", true, record1.get("DATA_COL0"));
@@ -191,23 +197,12 @@ public class TestAvroImport extends ImportJobTestCase {
     ByteBuffer b = ((ByteBuffer) object);
     assertEquals((byte) 1, b.get(0));
     assertEquals((byte) 2, b.get(1));
-    assertEquals("DATA_COL7", testDate.getTimeInMillis(), getEpoch(record1, "DATA_COL7"));
-    assertEquals("DATA_COL8", testTimestamp.getTimeInMillis(), getEpoch(record1, "DATA_COL8"));
-
+    assertEquals("DATA_COL7", testDate.toDateTime(), DateTimeFormat.forPattern(timestampPattern).parseDateTime(record1.get("DATA_COL7").toString()));
+    assertEquals("DATA_COL8", testTimestamp, DateTimeFormat.forPattern(timestampPattern).parseDateTime(record1.get("DATA_COL8").toString()));
+    assertEquals("DATA_COL9", testTime, DateTimeFormat.forPattern("HH:mm:ss.SSS").parseDateTime(record1.get("DATA_COL9").toString()).toLocalTime());
     if (codec != null) {
       assertEquals(codec, reader.getMetaString(DataFileConstants.CODEC));
     }
-  }
-
-  private Object getEpoch(GenericRecord record, String fieldName) {
-    return ((GenericData.Record)(record.get(fieldName))).get(AvroSchemaGenerator.EPOCH);
-  }
-
-  private Calendar newCalendar(int year, int month, int day) {
-    Calendar testDate = Calendar.getInstance();
-    testDate.clear();
-    testDate.set(year, month, day);
-    return testDate;
   }
 
   private String singleQuote(String string) {
@@ -236,16 +231,7 @@ public class TestAvroImport extends ImportJobTestCase {
     assertEquals("DATA_COL0", new Utf8("10"), record1.get("DATA_COL0"));
   }
 
-  private void checkDateField(Field field, String fieldName, String dateTypeName) {
-    checkField(field, fieldName, Type.RECORD);
-    Schema dateRecordSchema = field.schema().getTypes().get(0);
-    assertEquals(dateTypeName, dateRecordSchema.getName());
-    assertEquals(1, dateRecordSchema.getFields().size());
-    Field epochField = dateRecordSchema.getFields().get(0);
-    checkField(epochField, AvroSchemaGenerator.EPOCH, Type.LONG);
-  }
-
-  private void checkField(Field field, String name, Type type) {
+  private void checkField(Field field, String name, Type type) throws IOException {
     assertEquals(name, field.name());
     assertEquals(Schema.Type.UNION, field.schema().getType());
     assertEquals(type, field.schema().getTypes().get(0).getType());
