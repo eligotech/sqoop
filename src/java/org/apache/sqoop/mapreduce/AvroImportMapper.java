@@ -42,8 +42,6 @@ import com.cloudera.sqoop.lib.ClobRef;
 import com.cloudera.sqoop.lib.LargeObjectLoader;
 import com.cloudera.sqoop.lib.SqoopRecord;
 import com.cloudera.sqoop.mapreduce.AutoProgressMapper;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 
 /**
  * Imports records by transforming them to Avro records in an Avro data file.
@@ -108,7 +106,7 @@ public class AvroImportMapper
     if (o instanceof BigDecimal) {
       return o.toString();
     } else if (o instanceof Date) {
-      return isoDateTimeFormatter().format((Date) o);
+      return isoDateFormatter().format((Date) o);
     } else if (o instanceof Time) {
       return isoTimeFormatter().format((Time)o);
     } else if (o instanceof Timestamp) {
@@ -131,6 +129,10 @@ public class AvroImportMapper
 
     DateFormat isoDateTimeFormatter() {
         return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+    }
+
+    DateFormat isoDateFormatter() {
+        return new SimpleDateFormat("yyyy-MM-dd");
     }
 
     DateFormat isoTimeFormatter() {

@@ -158,8 +158,9 @@ public class TestAvroImport extends ImportJobTestCase {
     // this example checks for wrong week-year conversion
     DateTime testTimestamp = testTime.toDateTime(new DateTime(2012, 12, 31, 0, 0, 0, 0));
     String timestampPattern = "YYYY-MM-dd HH:mm:ss.SSS";
+    String datePattern = "YYYY-MM-dd";
     String[] vals = {"true", "100", "200", "1.0", "2.0", "'s'", "'0102'",
-      singleQuote(DateTimeFormat.forPattern("YYYY-MM-dd").print(testDate)),
+      singleQuote(DateTimeFormat.forPattern(datePattern).print(testDate)),
       singleQuote(DateTimeFormat.forPattern(timestampPattern).print(testTimestamp)),
       singleQuote(DateTimeFormat.forPattern("HH:mm:ss").print(testTime))
     } ;
@@ -197,7 +198,7 @@ public class TestAvroImport extends ImportJobTestCase {
     ByteBuffer b = ((ByteBuffer) object);
     assertEquals((byte) 1, b.get(0));
     assertEquals((byte) 2, b.get(1));
-    assertEquals("DATA_COL7", testDate.toDateTime(), DateTimeFormat.forPattern(timestampPattern).parseDateTime(record1.get("DATA_COL7").toString()));
+    assertEquals("DATA_COL7", testDate.toDateTime(), DateTimeFormat.forPattern(datePattern).parseDateTime(record1.get("DATA_COL7").toString()));
     assertEquals("DATA_COL8", testTimestamp, DateTimeFormat.forPattern(timestampPattern).parseDateTime(record1.get("DATA_COL8").toString()));
     assertEquals("DATA_COL9", testTime, DateTimeFormat.forPattern("HH:mm:ss.SSS").parseDateTime(record1.get("DATA_COL9").toString()).toLocalTime());
     if (codec != null) {
