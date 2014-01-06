@@ -43,7 +43,7 @@
     </else>
   </if>
 
-	<!-- Set variables per target hadoop version -->
+  <!-- Set variables per target hadoop version -->
   <if>
     <equals arg1="${hadoopversion}" arg2="20" />
     <then>
@@ -99,7 +99,7 @@
   <property name="Name" value="Sqoop" />
   <!-- <property name="offline" value="true" /> -->
 
-  <property name="version" value="1.4.2.6-SNAPSHOT" />
+  <property name="version" value="1.4.2.6" />
 
   <!-- The last version released. -->
   <property name="oldversion" value="1.4.1-incubating" />
@@ -352,7 +352,7 @@
         includes="**/*.java"
         destdir="${build.classes}"
         debug="${javac.debug}"
-				source="1.6" target="1.6"
+        source="1.6" target="1.6"
         deprecation="${javac.deprecation}">
       <classpath refid="compile.classpath"/>
     </javac>
@@ -364,7 +364,7 @@
         includes="**/*.java"
         destdir="${build.classes}"
         debug="${javac.debug}"
-				source="1.6" target="1.6"
+        source="1.6" target="1.6"
         deprecation="${javac.deprecation}">
       <classpath refid="compile.classpath"/>
     </javac>
